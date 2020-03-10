@@ -264,5 +264,10 @@ context.Remove(item);
 context.SaveChanges();
 ```
 
-
+### Including Virtual objects.
+```C#
+var listOfSaleItems = context.PurchaseOrders
+	.Include(x => x.Item) // asking entity framework to use InventoryItemId (foreignkey) to map this object with the query
+	.Include(x => x.PaymentType); // asking entity framework to use PaymentTypeId (foreignkey) to map this object with the query
+```
 ~ FIN
