@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MyStore.Context;
 using MyStore.Services;
+using MyStore.Services.Context;
 
 namespace MyStore
 {
@@ -24,15 +24,16 @@ namespace MyStore
 		{
 			services.AddControllers();
 
-			var connectionString = Configuration.GetConnectionString("ConnectionLocal");
+			services
+				.AddSingleton<InventoryFixedDataService>()
+				.AddSingleton<LiteDatabase>(new LiteDatabase(@"Filename=./Data/LiteDb.db;Mode=Shared"));
 
-			services.AddDbContext<StoreDataContext>(options => options.UseSqlServer(connectionString));
+			services
+				.AddScoped<InventoryLiteDbService>()
+				.AddScoped<DataService>();
 
-			services.AddSingleton<InventoryFixedDataService>();
-			services.AddSingleton<LiteDatabase>(new LiteDatabase(@"Filename=./Data/LiteDb.db;Mode=Shared"));
-
-			services.AddScoped<InventoryLiteDbService>();
-			services.AddScoped<DataService>();
+			var connString = Configuration.GetConnectionString("MyDatabase");
+			services.AddDbContext<DataContext>(options => options.UseSqlServer(connString));
 
 		}
 
@@ -44,7 +45,6 @@ namespace MyStore
 				app.UseDeveloperExceptionPage();
 			}
 
-			app.UseHttpsRedirection();
 			app.UseRouting();
 			app.UseAuthorization();
 			app.UseEndpoints(endpoints =>

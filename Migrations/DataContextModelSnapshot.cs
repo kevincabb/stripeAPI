@@ -3,17 +3,15 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using MyStore.Context;
+using MyStore.Services.Context;
 
-namespace dotnetefc.Migrations
+namespace MyStore.Migrations
 {
-    [DbContext(typeof(StoreDataContext))]
-    [Migration("20200306213403_Init")]
-    partial class Init
+    [DbContext(typeof(DataContext))]
+    partial class DataContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -215,7 +213,7 @@ namespace dotnetefc.Migrations
                         new
                         {
                             Id = 1,
-                            Datetime = new DateTime(2020, 3, 5, 13, 34, 3, 587, DateTimeKind.Local).AddTicks(4572),
+                            Datetime = new DateTime(2020, 3, 8, 11, 57, 37, 343, DateTimeKind.Local).AddTicks(8561),
                             InventoryItemId = 1,
                             NameOfBuyer = "John Doe",
                             PaymentTypeId = 1,
@@ -226,7 +224,7 @@ namespace dotnetefc.Migrations
                         new
                         {
                             Id = 2,
-                            Datetime = new DateTime(2020, 3, 4, 13, 34, 3, 587, DateTimeKind.Local).AddTicks(7024),
+                            Datetime = new DateTime(2020, 3, 7, 11, 57, 37, 344, DateTimeKind.Local).AddTicks(762),
                             InventoryItemId = 3,
                             NameOfBuyer = "Mildred Smith",
                             PaymentTypeId = 3,

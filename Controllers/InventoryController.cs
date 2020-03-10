@@ -10,9 +10,8 @@ namespace MyStore.Controllers
 	public class InventoryController : ControllerBase
 	{
 		readonly InventoryFixedDataService _fixedService;
-		readonly InventoryLiteDbService _liteDbservice;
+		readonly InventoryLiteDbService _liteDbService;
 		readonly DataService _dataService;
-
 		public InventoryController(
 			InventoryFixedDataService fixedService,
 			InventoryLiteDbService liteDbService,
@@ -20,7 +19,7 @@ namespace MyStore.Controllers
 		)
 		{
 			_fixedService = fixedService;
-			_liteDbservice = liteDbService;
+			_liteDbService = liteDbService;
 			_dataService = dataService;
 		}
 
@@ -28,22 +27,21 @@ namespace MyStore.Controllers
 		public int PopulateData()
 		{
 			var fixedData = _fixedService.fixedData;
-			return _liteDbservice.PopulateData(fixedData);
+			return _liteDbService.PopulateData(fixedData);
 		}
 
 		[HttpGet]
 		public IEnumerable<InventoryItem> GetInventoryItems()
 		{
 			// return _fixedService.fixedData;
-			// return _liteDbservice.getInventoryItems();
-			return _dataService.GetInventoryList();
+			return _dataService.GetInventoryItems();
 		}
 
 		[HttpGet("{id}")]
 		public InventoryItem GetInventoryItem(int id)
 		{
 			// return _fixedService.fixedData.AsEnumerable().First(x => x.Id == id);
-			// return _liteDbservice.GetInventoryItemById(id);
+			// return _liteDbService.GetInventoryItemById(id);
 			return _dataService.GetInventoryItemById(id);
 		}
 
@@ -51,7 +49,7 @@ namespace MyStore.Controllers
 		public int AddInventoryItem(InventoryItem item)
 		{
 			// return _fixedService.Insert(item);
-			// return _liteDbservice.Insert(item);
+			// return _liteDbService.Insert(item);
 			return _dataService.InsertInventoryItem(item);
 		}
 
@@ -59,14 +57,14 @@ namespace MyStore.Controllers
 		public bool DeleteInventoryItem(int id)
 		{
 			//return _fixedService.Delete(id);
-			return _liteDbservice.Delete(id);
+			return _dataService.DeleteInventoryItem(id); ;
 		}
 
 		[HttpPost("update")]
-		public InventoryItem Update(InventoryItem item)
+		public bool Update(InventoryItem item)
 		{
 			//return _fixedService.Update(item);
-			// return _liteDbservice.Update(item);
+			// return _liteDbService.Update(item);
 			return _dataService.UpdateInventoryItem(item);
 		}
 
@@ -74,25 +72,23 @@ namespace MyStore.Controllers
 		public IEnumerable<InventoryItem> FindBelowPrice(double price)
 		{
 			// return _fixedService.GetItemsLessThan(price);
-			return _liteDbservice.GetItemsLessThan(price);
+			// return _liteDbService.GetItemsLessThan(price);
+			return _dataService.GetItemsLessThan(price);
 		}
 
 		[HttpPost("update/name")]
 		public bool UpdateName(ChangeNameRequest request)
 		{
-			return _liteDbservice.UpdateName(request);
+			// return _liteDbService.UpdateName(request);
+			return _dataService.UpdateInventoryItemName(request);
 		}
 
 		[HttpGet("ItemsInLocation/{location}")]
 		public IEnumerable<ChangeNameRequest> GetNameAndIdInLocation(string location)
 		{
-			return _liteDbservice.GetNameAndIdsInStorageLocation(location);
+			// return _liteDbService.GetNameAndIdsInStorageLocation(location);
+			return _dataService.GetNameAndIdsInStorageLocation(location);
 		}
 
-		[HttpGet("order")]
-		public IEnumerable<PurchaseOrder> GetPurchaseOrders()
-		{
-			return _dataService.GetPurchaseOrdersList();
-		}
 	}
 }

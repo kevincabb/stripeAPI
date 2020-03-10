@@ -18,7 +18,7 @@ https://github.com/jfoleysjcoe/dotnetlitedb
 
 `dotnet add package Microsoft.EntityFrameworkCore.Design --version 3.1.2`
 
-If `dotnet ef` doesn't give you a unicorn. Run the following command. 
+If `dotnet ef` doesn't give you a unicorn. Run the following command.
 
 `dotnet tool install -g dotnet-ef`
 

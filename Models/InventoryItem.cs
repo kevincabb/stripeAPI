@@ -7,7 +7,7 @@ namespace MyStore.Models
 	public class InventoryItem
 	{
 		[Key]
-		[DatabaseGenerated (DatabaseGeneratedOption.Identity)]
+		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int Id { get; set; }
 		public string Description { get; set; }
 		public string Name { get; set; }
@@ -15,8 +15,8 @@ namespace MyStore.Models
 		public string Sku { get; set; }
 		public string StorageLocation { get; set; }
 		public int Quantity { get; set; }
-		public bool IsSaleItem { get; set; }
 
+		public bool IsSaleItem { get; set; }
 		[BsonIgnore][NotMapped] public bool HasDescription => Description != null && Description != "";
 
 		public InventoryItem() { }

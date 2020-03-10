@@ -14,10 +14,6 @@ namespace MyStore.Services
 		}
 		public int PopulateData(List<InventoryItem> items)
 		{
-			items = items.Select(x => {
-				x.Id = 0;
-				return x;
-			}).ToList();
 			return Inventory.InsertBulk(items);
 		}
 		public IEnumerable<InventoryItem> getInventoryItems()

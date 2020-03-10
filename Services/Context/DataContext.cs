@@ -3,18 +3,16 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using MyStore.Models;
 
-namespace MyStore.Context
+namespace MyStore.Services.Context
 {
-	public class StoreDataContext : DbContext
+	public class DataContext : DbContext
 	{
 		public DbSet<InventoryItem> InventoryItems { get; set; }
 		public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
 		public DbSet<PaymentType> PaymentTypes { get; set; }
 
-		public StoreDataContext(DbContextOptions<StoreDataContext> options) : base(options)
-		{
-
-		}
+		public DataContext(DbContextOptions<DataContext> options) : base(options)
+		{ }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -24,6 +22,7 @@ namespace MyStore.Context
 
 		private void SeedData(ModelBuilder builder)
 		{
+			//took fixed data straight from fixedService
 			var fixedData = new List<InventoryItem> {
 				new InventoryItem(1, "#2 pencil", "Pencil", .50, "38830982031", "A1", 100),
 				new InventoryItem(2, "spiral notebook", "Notebook", 1.50, "3881111131", "A2", 50),
@@ -35,6 +34,7 @@ namespace MyStore.Context
 			};
 			builder.Entity<InventoryItem>().HasData(fixedData);
 
+			// also initializing the accepted payment types
 			var types = new List<PaymentType> {
 				new PaymentType() {
 					Id = 1,
@@ -59,6 +59,7 @@ namespace MyStore.Context
 			};
 			builder.Entity<PaymentType>().HasData(types);
 
+			// and mocking some purchase orders
 			var orders = new List<PurchaseOrder> {
 				new PurchaseOrder() {
 					Id = 1,
