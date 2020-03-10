@@ -1,6 +1,6 @@
 # .Net Api with Entity Framework
 
-Last updated: 3/5/2020
+Last updated: 3/10/2020
 
 Starting out with the project we've already created
 
@@ -29,9 +29,7 @@ Tell Entity Framework that you've added a change to migrate. Migrations will onl
 
 `dotnet ef migrations add [name]`
 
-\* [name] should be descriptive.
-
-For example: `Initialize`, `UpdateInventoryModel`, `AddPurchaseOrderModel`
+\* [name] should be descriptive. -- For example: `Initialize`, `UpdateInventoryModel`, `AddPurchaseOrderModel`
 
 Tell Entity Framekwork to sync your migrations with the database.
 
@@ -40,6 +38,12 @@ Tell Entity Framekwork to sync your migrations with the database.
 Tell Entity Framework to undo your last migration
 
 `dotnet ef migrations remove`
+
+### Important!
+
+1. Entity Framework can be frustrating at time when you're dealing with your migrations. This is normal :)
+2. Do not rename or move your models or context once you run `migrations add` because the Migrations folder references these models and locations. If this is something you want to do, please ping me and I'll explain the process to accomplish this correctly.
+3. Always Stop your api when running EF commands. This will ensure EF will use the latest code.
 
 ---
 
