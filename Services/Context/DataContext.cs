@@ -10,13 +10,19 @@ namespace MyStore.Services.Context
 		public DbSet<InventoryItem> InventoryItems { get; set; }
 		public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
 		public DbSet<PaymentType> PaymentTypes { get; set; }
-
+		public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
 		public DataContext(DbContextOptions<DataContext> options) : base(options)
-		{ }
+		{
 
+		}
+		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){
+			base.OnConfiguring(optionsBuilder);
+			optionsBuilder.EnableSensitiveDataLogging();
+		}
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
+
 			SeedData(modelBuilder);
 		}
 
@@ -38,22 +44,26 @@ namespace MyStore.Services.Context
 			var types = new List<PaymentType> {
 				new PaymentType() {
 					Id = 1,
-					Name = "Cash"
+					Name = "None"
 				},
 				new PaymentType() {
 					Id = 2,
-					Name = "Credit"
+					Name = "Cash"
 				},
 				new PaymentType() {
 					Id = 3,
-					Name = "Debit"
+					Name = "Credit"
 				},
 				new PaymentType() {
 					Id = 4,
-					Name = "Check"
+					Name = "Debit"
 				},
 				new PaymentType() {
 					Id = 5,
+					Name = "Check"
+				},
+				new PaymentType() {
+					Id = 6,
 					Name = "GiftCard"
 				}
 			};
@@ -63,26 +73,47 @@ namespace MyStore.Services.Context
 			var orders = new List<PurchaseOrder> {
 				new PurchaseOrder() {
 					Id = 1,
-					InventoryItemId = 1,
-					Quantity = 2,
 					Datetime = DateTime.Now.AddDays(-1),
-					Subtotal = 1,
-					SalesTax = .25,
-					PaymentTypeId = 1,
+					Subtotal = 5.5,
+					SalesTax = .45,
+					PaymentTypeId = 2,
 					NameOfBuyer = "John Doe"
 				},
 				new PurchaseOrder() {
 					Id = 2,
-					InventoryItemId = 3,
-					Quantity = 4,
 					Datetime = DateTime.Now.AddDays(-2),
-					Subtotal = 18,
-					SalesTax = 4.5,
-					PaymentTypeId = 3,
+					Subtotal = 98.5,
+					SalesTax = 106.35,
+					PaymentTypeId = 4,
 					NameOfBuyer = "Mildred Smith"
 				}
 			};
 			builder.Entity<PurchaseOrder>().HasData(orders);
+
+			var orderItems = new List<PurchaseOrderItem> {
+				new PurchaseOrderItem() {
+					Id = 1,
+					InventoryItemId = 1,
+					PurchaseOrderId = 1,
+					Quantity = 2
+				},new PurchaseOrderItem() {
+					Id = 2,
+					InventoryItemId = 3,
+					PurchaseOrderId = 1,
+					Quantity = 1
+				},new PurchaseOrderItem() {
+					Id = 3,
+					InventoryItemId = 1,
+					PurchaseOrderId = 2,
+					Quantity = 1
+				},new PurchaseOrderItem() {
+					Id = 4,
+					InventoryItemId = 4,
+					PurchaseOrderId = 2,
+					Quantity = 2
+				}
+			};
+			builder.Entity<PurchaseOrderItem>().HasData(orderItems);
 		}
 	}
 }

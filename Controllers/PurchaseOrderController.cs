@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MyStore.Models;
 using MyStore.Services;
+using Stripe;
+using Stripe.Checkout;
 
 namespace MyStore.Controllers
 {
@@ -10,9 +13,11 @@ namespace MyStore.Controllers
 	public class PurchaseOrderController
 	{
 		readonly DataService _service;
-		public PurchaseOrderController(DataService dataService)
+		readonly StripeHelperService _stripeHelper;
+		public PurchaseOrderController(DataService dataService, StripeHelperService stripeHelper)
 		{
 			_service = dataService;
+			_stripeHelper = stripeHelper;
 		}
 
 		[HttpGet]
@@ -37,6 +42,18 @@ namespace MyStore.Controllers
 		public bool DeletePurchaseOrder(int id)
 		{
 			return _service.DeletePurchaseOrder(id);
+		}
+
+		[HttpPost("payment")]
+		public async Task<Session> InitiatePaymentWithStripeAsync(PurchaseOrderRequest[] request)
+		{
+			return await _stripeHelper.InitSessionAsync(request);
+		}
+
+		[HttpGet("post/{sessionId}")]
+		public PurchaseOrder ProcessItem(string sessionId)
+		{
+			return _stripeHelper.GetPurchaseOrderBySessionId(sessionId);
 		}
 	}
 }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyStore.Services.Context;
 
 namespace MyStore.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200311020452_UpdatePurchaseOrderWithStripeId")]
+    partial class UpdatePurchaseOrderWithStripeId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -149,31 +151,26 @@ namespace MyStore.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "None"
-                        },
-                        new
-                        {
-                            Id = 2,
                             Name = "Cash"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = 2,
                             Name = "Credit"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 3,
                             Name = "Debit"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 4,
                             Name = "Check"
                         },
                         new
                         {
-                            Id = 6,
+                            Id = 5,
                             Name = "GiftCard"
                         });
                 });
@@ -188,10 +185,16 @@ namespace MyStore.Migrations
                     b.Property<DateTime>("Datetime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("InventoryItemId")
+                        .HasColumnType("int");
+
                     b.Property<string>("NameOfBuyer")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PaymentTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<double>("SalesTax")
@@ -205,6 +208,8 @@ namespace MyStore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("InventoryItemId");
+
                     b.HasIndex("PaymentTypeId");
 
                     b.ToTable("PurchaseOrders");
@@ -213,98 +218,38 @@ namespace MyStore.Migrations
                         new
                         {
                             Id = 1,
-                            Datetime = new DateTime(2020, 3, 10, 12, 19, 7, 55, DateTimeKind.Local).AddTicks(1612),
+                            Datetime = new DateTime(2020, 3, 9, 19, 4, 52, 257, DateTimeKind.Local).AddTicks(8489),
+                            InventoryItemId = 1,
                             NameOfBuyer = "John Doe",
-                            PaymentTypeId = 2,
-                            SalesTax = 0.45000000000000001,
-                            Subtotal = 5.5
+                            PaymentTypeId = 1,
+                            Quantity = 2,
+                            SalesTax = 0.25,
+                            Subtotal = 1.0
                         },
                         new
                         {
                             Id = 2,
-                            Datetime = new DateTime(2020, 3, 9, 12, 19, 7, 55, DateTimeKind.Local).AddTicks(4128),
-                            NameOfBuyer = "Mildred Smith",
-                            PaymentTypeId = 4,
-                            SalesTax = 106.34999999999999,
-                            Subtotal = 98.5
-                        });
-                });
-
-            modelBuilder.Entity("MyStore.Models.PurchaseOrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("InventoryItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PurchaseOrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InventoryItemId");
-
-                    b.HasIndex("PurchaseOrderId");
-
-                    b.ToTable("PurchaseOrderItems");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            InventoryItemId = 1,
-                            PurchaseOrderId = 1,
-                            Quantity = 2
-                        },
-                        new
-                        {
-                            Id = 2,
+                            Datetime = new DateTime(2020, 3, 8, 19, 4, 52, 258, DateTimeKind.Local).AddTicks(822),
                             InventoryItemId = 3,
-                            PurchaseOrderId = 1,
-                            Quantity = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            InventoryItemId = 1,
-                            PurchaseOrderId = 2,
-                            Quantity = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            InventoryItemId = 4,
-                            PurchaseOrderId = 2,
-                            Quantity = 2
+                            NameOfBuyer = "Mildred Smith",
+                            PaymentTypeId = 3,
+                            Quantity = 4,
+                            SalesTax = 4.5,
+                            Subtotal = 18.0
                         });
                 });
 
             modelBuilder.Entity("MyStore.Models.PurchaseOrder", b =>
                 {
-                    b.HasOne("MyStore.Models.PaymentType", "PaymentType")
-                        .WithMany()
-                        .HasForeignKey("PaymentTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("MyStore.Models.PurchaseOrderItem", b =>
-                {
-                    b.HasOne("MyStore.Models.InventoryItem", "InventoryItem")
+                    b.HasOne("MyStore.Models.InventoryItem", "Item")
                         .WithMany()
                         .HasForeignKey("InventoryItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyStore.Models.PurchaseOrder", "PurchaseOrder")
-                        .WithMany("PurchaseOrderItems")
-                        .HasForeignKey("PurchaseOrderId")
+                    b.HasOne("MyStore.Models.PaymentType", "PaymentType")
+                        .WithMany()
+                        .HasForeignKey("PaymentTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

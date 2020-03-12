@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyStore.Services;
 using MyStore.Services.Context;
+using Stripe;
+using Stripe.Checkout;
 
 namespace MyStore
 {
@@ -32,9 +34,28 @@ namespace MyStore
 				.AddScoped<InventoryLiteDbService>()
 				.AddScoped<DataService>();
 
+			// Stripe
+			// See your keys here: https://dashboard.stripe.com/account/apikeys
+			Stripe.StripeConfiguration.ApiKey = Configuration
+				.GetSection("Stripe").GetValue("ApiKey", "");
+
+			services
+				.AddTransient<StripeHelperService>()
+				.AddTransient<SessionService>()
+				.AddTransient<PaymentIntentService>();
+
+
 			var connString = Configuration.GetConnectionString("MyDatabase");
 			services.AddDbContext<DataContext>(options => options.UseSqlServer(connString));
 
+			services.AddCors(options =>
+				{
+					options.AddPolicy("CorsPolicy",
+						builder => builder.WithOrigins("http://localhost:4200")
+						.AllowAnyHeader()
+						.AllowAnyMethod()
+						.AllowCredentials());
+				});
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,6 +68,7 @@ namespace MyStore
 
 			app.UseRouting();
 			app.UseAuthorization();
+			app.UseCors("CorsPolicy");
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();

@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyStore.Models;
 using MyStore.Services.Context;
@@ -73,16 +74,18 @@ namespace MyStore.Services
 		#endregion
 
 		#region Purchase Orders
-		public int InsertPurchaseOrder(PurchaseOrder order)
+		public async Task<int> InsertPurchaseOrder(PurchaseOrder order)
 		{
-			var trackedItem = _context.Add(order);
+			var trackedItem = await _context.AddAsync(order);
+			await _context.SaveChangesAsync();
 			return trackedItem.Entity.Id;
 		}
 
 		public IEnumerable<PurchaseOrder> GetPurchaseOrders()
 		{
 			return _context.PurchaseOrders
-				.Include(x => x.Item)
+				.Include(x => x.PurchaseOrderItems)
+				.ThenInclude(y => y.InventoryItem)
 				.Include(x => x.PaymentType);
 		}
 
