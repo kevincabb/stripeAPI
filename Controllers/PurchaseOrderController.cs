@@ -44,13 +44,13 @@ namespace MyStore.Controllers
 			return _service.DeletePurchaseOrder(id);
 		}
 
-		[HttpPost("payment")]
+		[HttpPost("newSession")]
 		public async Task<Session> InitiatePaymentWithStripeAsync(PurchaseOrderRequest[] request)
 		{
 			return await _stripeHelper.InitSessionAsync(request);
 		}
 
-		[HttpGet("post/{sessionId}")]
+		[HttpGet("bySession/{sessionId}")]
 		public PurchaseOrder ProcessItem(string sessionId)
 		{
 			return _stripeHelper.GetPurchaseOrderBySessionId(sessionId);

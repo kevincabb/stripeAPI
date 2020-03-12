@@ -65,7 +65,7 @@ namespace MyStore.Services
 					Currency = "usd",
 					Quantity = 1
 				}).ToList(),
-				SuccessUrl = "http://localhost:4200/checkout?session_id={CHECKOUT_SESSION_ID}",
+				SuccessUrl = "http://localhost:4200/result?session_id={CHECKOUT_SESSION_ID}",
 				CancelUrl = $"http://localhost:4200/checkout?cancel={poId}",
 				Metadata = metaValues
 			};
