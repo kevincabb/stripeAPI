@@ -50,8 +50,14 @@ namespace MyStore.Controllers
 			return await _stripeHelper.InitSessionAsync(request);
 		}
 
+		[HttpGet("session/{sessionId}")]
+		public Session GetSession(string sessionId)
+		{
+			return _stripeHelper.GetSessionBySessionId(sessionId);
+		}
+
 		[HttpGet("bySession/{sessionId}")]
-		public PurchaseOrder ProcessItem(string sessionId)
+		public PurchaseOrder GetPurchaseOrder(string sessionId)
 		{
 			return _stripeHelper.GetPurchaseOrderBySessionId(sessionId);
 		}

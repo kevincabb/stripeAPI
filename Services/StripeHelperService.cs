@@ -25,38 +25,46 @@ namespace MyStore.Services
 
 		public async Task<Session> InitSessionAsync(PurchaseOrderRequest[] request)
 		{
-			var requestEnum = request.AsEnumerable();
-			var itemList = request.Join(_dataService.GetInventoryItems(),
-			x => x.InventoryItemId, y => y.Id, (x, y) => new PurchaseOrderRequest()
-			{
-				InventoryItemId = x.InventoryItemId,
-				Quantity = x.Quantity,
-				Price = y.Price,
-				Name = y.Name,
-				Description = y.Description
-			});
-
+			var itemList = request.Join(
+				_dataService.GetInventoryItems(),
+				x => x.InventoryItemId,
+				y => y.Id,
+				(x, y) => new PurchaseOrderRequest()
+				{
+					InventoryItemId = x.InventoryItemId,
+					Quantity = x.Quantity,
+					Price = y.Price,
+					Name = y.Name,
+					Description = y.Description
+				});
 
 			var po = new PurchaseOrder(itemList);
 			var poId = await _dataService.InsertPurchaseOrder(po);
+			// we had to convert InsertPurchaseOrder to async method because we need
+			// to wait until the database saves and returns us an Id, so we use "await" to pause
+			// the thread until the Task is complete.
+
+			// metaValues, Stripe lets you add meta data to your sessions/payments/transactions.
 			var metaValues = new Dictionary<string, string>();
 			metaValues.Add("PurchaseOrderId", $"{poId}");
 
 			var options = new SessionCreateOptions
 			{
 				PaymentMethodTypes = new List<string> {
-							"card", // other 2 options are ideal and FPT (appears to be country driven)
-					},
+					"card", // other 2 options are ideal and FPT (appears to be country driven)
+				},
 				LineItems = itemList.Select(x =>
 				{
+					// first make a LineItem for each item in request list.
 					return new SessionLineItemOptions
 					{
 						Name = $"{x.Name}",
 						Description = $"{x.Description}",
-						Amount = (long)(x.Price * 100),
+						Amount = (long)(x.Price * 100), // Stripe uses long for price
 						Currency = "usd",
 						Quantity = x.Quantity
 					};
+					// after list is generated, we'll append the sales tax line
 				}).Append(new SessionLineItemOptions
 				{
 					Name = "Sales Tax",
@@ -69,9 +77,13 @@ namespace MyStore.Services
 				CancelUrl = $"http://localhost:4200/checkout?cancel={poId}",
 				Metadata = metaValues
 			};
-			var session = sessions.Create(options);
+			var session = sessions.Create(options); // Create session
+																							// Save sessionId in the purchase order request
 			po.StripeCheckoutSessionId = session.Id;
 			_dataService.SavePurchaseOrder(po);
+			// return the session, could just respond with sessionId
+
+			// So the Session knows the Purchase Order its referring to and the PO also has the sessionId.
 			return session;
 		}
 
@@ -84,14 +96,19 @@ namespace MyStore.Services
 
 		public PurchaseOrder GetPurchaseOrderBySessionId(string sessionId)
 		{
-			var res = sessions.Get(sessionId);
+			var res = GetSessionBySessionId(sessionId);
+
 			var poId = Int32.Parse(res.Metadata.GetValueOrDefault("PurchaseOrderId"));
 			var po = _dataService.GetPurchaseOrderById(poId);
 
-			res.PaymentIntent = paymentIntents.Get(res.PaymentIntentId);
+			// we can also query the db to find the PO that matches the property sessionId
+			var poAlt = _dataService.GetPurchaseOrders()
+				.SingleOrDefault(x => x.StripeCheckoutSessionId == sessionId);
+
+			if (po == null || poAlt == null)
+				return null;
 
 			po.StripeCheckoutSession = res;
-
 			return po;
 		}
 	}
