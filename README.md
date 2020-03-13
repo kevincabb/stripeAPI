@@ -1,277 +1,445 @@
 # .Net Api with Entity Framework
 
-Last updated: 3/10/2020
+Last updated: 3/13/2020
 
 Starting out with the project we've already created
-
 https://github.com/jfoleysjcoe/dotnetlitedb
-
-## EF Core Cli
-
-### Setup
-
-`dotnet add package Microsoft.EntityFrameworkCore --version 3.1.2`
-
-`dotnet add package Microsoft.EntityFrameworkCore.Tools --version 3.1.2`
-
-`dotnet add package Microsoft.EntityFrameworkCore.SqlServer --version 3.1.2`
-
-`dotnet add package Microsoft.EntityFrameworkCore.Design --version 3.1.2`
-
-If `dotnet ef` doesn't give you a unicorn. Run the following command.
-
-`dotnet tool install -g dotnet-ef`
-
----
-## Command line helper
-
-Tell Entity Framework that you've added a change to migrate. Migrations will only be added if the .net build succeeds.
-
-`dotnet ef migrations add [name]`
-
-\* [name] should be descriptive. -- For example: `Initialize`, `UpdateInventoryModel`, `AddPurchaseOrderModel`
-
-Tell Entity Framekwork to sync your migrations with the database.
-
-`dotnet ef database update`
-
-Tell Entity Framework to undo your last migration
-
-`dotnet ef migrations remove`
-
-### Important!
-
-1. Entity Framework can be frustrating at time when you're dealing with your migrations. This is normal :)
-2. Do not rename or move your models or context once you run `migrations add` because the Migrations folder references these models and locations. If this is something you want to do, please ping me and I'll explain the process to accomplish this correctly.
-3. Always Stop your api when running EF commands. This will ensure EF will use the latest code.
-
----
+and
+https://github.com/jfoleysjcoe/dotnetefcore
 
 ## Setting up your project
 
-Models and Context are the key classes for Entity Framework.
+Assuming you've caught up with the last state of the Entity Framework project, lets now add what we need for Stripe Api communication.
 
-### Models
+### Add Stripe package
 
-We have a model `InventoryItem.cs`
+First we'll need to add the Stripe dotnet package
 
-Lets add a couple more and take a look at some Entity Framework related decorators.
+`dotnet add package stripe.net`
 
-Don't forget to add similar modifiers to `InventoryItem.cs`
+### Set up key
+
+##### appsettings.json
+
+```json
+"Stripe": {
+	"ApiKey":"YourStripeSecretKey"
+}
+```
+
+This key can be found at [Stripe Test Api Keys](https://dashboard.stripe.com/test/apikeys)
+
+### Updating our Models and Context
+
+Since we want purchase orders to contain a variety of inventory items with different quantities, we will have to update our database schema.
+
+Purchase orders can't contain InventoryItemId or Quantity any more, since these will vary per item in the order.
+
+I have added a new model called `PurchaseOrderItem`
+
+```c#
+public class PurchaseOrderItem
+{
+	[Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+	public int Id { get; set; }
+
+	public int InventoryItemId { get; set; } // which item is being bought
+	public int PurchaseOrderId { get; set; } // which purchase order is this for
+	public int Quantity { get; set; }	// how many items were bought
+
+	[ForeignKey("InventoryItemId")]
+	public virtual InventoryItem InventoryItem { get; set; }
+
+	[JsonIgnore][ForeignKey("PurchaseOrderId")] // why did we JsonIgnore?
+	public virtual PurchaseOrder PurchaseOrder { get; set; }
+}
+```
+
+Having `PurchaseOrderItem` class allows us to clean up the `PurchaseOrder` class
 
 ##### PurchaseOrder.cs
+
 ```C#
 public class PurchaseOrder
 {
-	[Key] // informing ef that this is the tables unique identifier
-	[DatabaseGenerated(DatabaseGeneratedOption.Identity)] // informing ef that the db will provide this value
+	[Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 	public int Id { get; set; }
-	public int InventoryItemId { get; set; }
+
 	public int PaymentTypeId { get; set; }
 	public DateTime Datetime { get; set; }
-	public int Quantity { get; set; }
-	public double Subtotal {get; set; }
+	public double Subtotal { get; set; }
 	public double SalesTax { get; set; }
-	public string NameOfBuyer { get; set; }
+	public string NameOfBuyer { get; set; } // do we still need this?
 
-	[ForeignKey("InventoryItemId")] // referencing the InventoryItemId above
-	public virtual InventoryItem Item { get; set; } // virtual allows ef to lazy load the property for efficieny
-	[ForeignKey("PaymentTypeId")]
-	public virtual PaymentType PaymentType { get; set; }
+	// now a PO has a list of items in the sale each with its own Id and Quantity
+	public ICollection<PurchaseOrderItem> PurchaseOrderItems { get; set; }
 
-	[NotMapped] public double Total => Subtotal + SalesTax; // tells ef not to map this to database
+	[ForeignKey("PaymentTypeId")] public virtual PaymentType PaymentType { get; set; }
+
+	// each PO request generates a sessionId that is unique in Stripe, it would be wise to
+	// to store this with the PO in case we need to reference it.
+	public string StripeCheckoutSessionId { get; set; }
+
+	[NotMapped] public Session StripeCheckoutSession { get; set; }
+	[NotMapped] public double Total => Subtotal + SalesTax;
 }
 ```
-##### PaymentType.cs
-```C#
-public class PaymentType
+
+##### PurchaseOrder.cs
+
+```c#
+public class PurchaseOrderRequest
 {
-	[Key]
-	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-	public int Id { get; set; }
-	public string Name { get; set; }
+	public int InventoryItemId { get; set; }
+	public int Quantity { get; set; }
+	[JsonIgnore] public double Price { get; set; } // JsonIgnore?
+	[JsonIgnore] public string Name { get; set; } // we'll see later how we're using this
+	[JsonIgnore] public string Description { get; set; } // and why it is helpful
 }
 ```
 
-### Context
+Great, we've changed a bunch of models. Now what? Well, to start, we had some seed data that we created that is now, very much, broken and giving us compilation errors. So you'll have to update the context to properly seed build and seed the database.
 
-A context class is an important piece of working with the Entity Framework. It represents a session of the underlying database so that you can perform tasks on that database.
-
-The context class is used to query or save data to the database. It is also used to configure domain classes, database related mappings, change tracking settings, caching, transaction etc.
-
-We will create a single context for this demo.
-
-As you can see below, every context created will inherit from `DbContext`. We also included entity sets for `InventoryItem`, `PurchaseOrder` and `PaymentType`
+Lucky for you, I'll toss that code in here
 
 ##### DataContext.cs
+
 ```C#
-public class DataContext : DbContext
-{
-	public DbSet<InventoryItem> InventoryItems { get; set; }
-	public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
-	public DbSet<PaymentType> PaymentTypes { get; set; }
+// we need to add the DbSet of the new class we made
+public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
 
-	public DataContext(DbContextOptions<DataContext> options) : base(options)
-	{ }
-
-}
-```
-
-With the context created, we need to add it to the services provided within `Startup.cs`.
-
-##### Startup.cs
-```C#
-public void ConfigureServices(IServiceCollection services)
-{
-	...
-	var connectionString = Configuration.GetConnectionString("NameOfMyConnectionString"); // from app settings
-	services.AddDbContext<DataContext>(options => options.UseSqlServer(connectionString));
-	...
-}
-```
-
-Your connection string will be stored within your `appsettings.json`. We will go over how to obtain this string from you database.
-
-##### appsettings.json
-```json
-"ConnectionStrings": {
-	"NameOfMyConnectionString": "Data Source=<server-name>;Initial Catalog=<dbname>;Persist Security Info=True;User ID=<username>;Password=<password>"
-}
-```
-
-### Seeding Data
-
-Now that you have you context started with your models ready, we can request Entity Framework to initialize the database with some data if it is empty. We do this by overriding the `OnModelCreating` within the context.
-
-##### DataContext.cs
-```C#
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-	base.OnModelCreating(modelBuilder);
-	SeedData(modelBuilder);
-}
-
+// update the seedData function
 private void SeedData(ModelBuilder builder)
 {
-	//took fixed data straight from fixedService
-	var fixedData = new List<InventoryItem> {
-		new InventoryItem(1, "#2 pencil", "Pencil", .50, "38830982031", "A1", 100),
-		new InventoryItem(2, "spiral notebook", "Notebook", 1.50, "3881111131", "A2", 50),
-		new InventoryItem(3, "3 ring binder with dividers", "Binder", 4.50, "54830982031", "A2", 5),
-		new InventoryItem(4, "Scientific calculator", "Ti83+ Calculator", 49.00, "3889462031", "A4", 100),
-		new InventoryItem(5, "black ball point pen", "Pen", .50, "388309867", "A1", 10),
-		new InventoryItem(6, "metallic coaster", "Coaster", 5.50, "388309212", "A6", 1),
-		new InventoryItem(7, "Fuzzy backpack", "Backpack", 25.49, "388309987", "A5", 100)
-	};
-	builder.Entity<InventoryItem>().HasData(fixedData);
+	// Inventory Fixed Data was not pasted in since it didn't change
 
-	// also initializing the accepted payment types
+	// New Payment Type "None" was added as first record
 	var types = new List<PaymentType> {
 		new PaymentType() {
+			Id = 1,
+			Name = "None"
+		},
+		new PaymentType() {
+			Id = 2,
 			Name = "Cash"
 		},
 		new PaymentType() {
+			Id = 3,
 			Name = "Credit"
 		},
 		new PaymentType() {
+			Id = 4,
 			Name = "Debit"
 		},
 		new PaymentType() {
+			Id = 5,
 			Name = "Check"
 		},
 		new PaymentType() {
+			Id = 6,
 			Name = "GiftCard"
 		}
 	};
 	builder.Entity<PaymentType>().HasData(types);
 
-	// and mocking some purchase orders
+	// Update mocking of purchase orders
 	var orders = new List<PurchaseOrder> {
 		new PurchaseOrder() {
 			Id = 1,
-			InventoryItemId = 1,
-			Quantity = 2,
 			Datetime = DateTime.Now.AddDays(-1),
-			Subtotal = 1,
-			SalesTax = .25,
-			PaymentTypeId = 1,
+			Subtotal = 5.5,
+			SalesTax = .45,
+			PaymentTypeId = 2,
 			NameOfBuyer = "John Doe"
 		},
 		new PurchaseOrder() {
 			Id = 2,
-			InventoryItemId = 3,
-			Quantity = 4,
 			Datetime = DateTime.Now.AddDays(-2),
-			Subtotal = 18,
-			SalesTax = 4.5,
-			PaymentTypeId = 3,
+			Subtotal = 98.5,
+			SalesTax = 106.35,
+			PaymentTypeId = 4,
 			NameOfBuyer = "Mildred Smith"
 		}
 	};
 	builder.Entity<PurchaseOrder>().HasData(orders);
+
+	// Mock the Item list for the purchase orders above
+	var orderItems = new List<PurchaseOrderItem> {
+		new PurchaseOrderItem() {
+			Id = 1,
+			InventoryItemId = 1,
+			PurchaseOrderId = 1,
+			Quantity = 2
+		},new PurchaseOrderItem() {
+			Id = 2,
+			InventoryItemId = 3,
+			PurchaseOrderId = 1,
+			Quantity = 1
+		},new PurchaseOrderItem() {
+			Id = 3,
+			InventoryItemId = 1,
+			PurchaseOrderId = 2,
+			Quantity = 1
+		},new PurchaseOrderItem() {
+			Id = 4,
+			InventoryItemId = 4,
+			PurchaseOrderId = 2,
+			Quantity = 2
+		}
+	};
+	builder.Entity<PurchaseOrderItem>().HasData(orderItems);
 }
 ```
 
-## All the CRUD
+### Are we ready now?
 
-Everything should now be set up for you to start `C`reating, `R`eading, `U`pdating and `D`eleting data, except of course we haven't created a service yet.
+No, we still need to record the migration and update the dataabase.
 
-So that's the next step.
+So we'll run our migration commands
 
-We have already created `InventoryFixedDataService` and the `InventoryLiteDbService`. Both of those had a single responsibility. In this demo we'll be creating a more broad service called `DataService`.
+`dotnet ef migrations UpdatePurchaseOrderModel`
 
-The only different between this service and the others is the context property.
+and
+
+`dotnet ef database update`
+
+If that was successful, we're good to continue.
+
+---
+
+## Stripe Session Service
+
+### _This section coorelates to "Init Stripe Session with Redirect" in the client ReadMe_
+
+According to [Stripe Api Doc - Sessions](https://stripe.com/docs/api/checkout/sessions/create) we need to use the `SessionService`. They even provide a snippet of code as an example and the response expected.
+
+Since `SessionService` is a service, we should add it to the services provided by the .net framework by adding it in `Startup.cs`
+
+##### Startup.cs
+
+```c#
+// we need to set the Private key from config
+Stripe.StripeConfiguration.ApiKey = Configuration
+	.GetSection("Stripe").GetValue("ApiKey", "");
+
+services
+	.AddTransient<SessionService>();
+
+```
+
+### Helper Service and usage
+
+I decided to create a service that handles all Stripe related calls. This lets me focus Stripe work in one service.
+
+##### StripeHelperService.cs
 
 ```C#
-public class DataService
+public class StripeHelperService
 {
-	private readonly DataContext context;
-	public DataService(DataContext context) // this is provided because we defined it in startup
-	{
-		this.context = context;
-	}
+  readonly DataService _dataService;
+  readonly SessionService sessions;
+  public StripeHelperService(
+    DataService dataService,
+    SessionService sessionService)
+  {
+    _dataService = dataService;
+    sessions = sessionService;
+  }
 
+  public async Task<Session> InitSessionAsync(PurchaseOrderRequest[] request)
+  {
+    var itemList = request.Join(
+      _dataService.GetInventoryItems(),
+      x => x.InventoryItemId,
+      y => y.Id,
+      (x, y) => new PurchaseOrderRequest() {
+        InventoryItemId = x.InventoryItemId,
+        Quantity = x.Quantity,
+        Price = y.Price,
+        Name = y.Name,
+        Description = y.Description
+      });
 
+    var po = new PurchaseOrder(itemList);
+    var poId = await _dataService.InsertPurchaseOrder(po);
+    // we had to convert InsertPurchaseOrder to async method because we need
+    // to wait until the database saves and returns us an Id, so we use "await" to pause
+    // the thread until the Task is complete.
+
+    // metaValues, Stripe lets you add meta data to your sessions/payments/transactions.
+    var metaValues = new Dictionary<string, string>();
+    metaValues.Add("PurchaseOrderId", $"{poId}");
+
+    var options = new SessionCreateOptions
+    {
+      PaymentMethodTypes = new List<string> {
+        "card", // other 2 options are ideal and FPT (appears to be country driven)
+      },
+      LineItems = itemList.Select(x =>
+      {
+        // first make a LineItem for each item in request list.
+        return new SessionLineItemOptions
+        {
+          Name = $"{x.Name}",
+          Description = $"{x.Description}",
+          Amount = (long)(x.Price * 100),
+          Currency = "usd",
+          Quantity = x.Quantity
+        };
+      }).Append(new SessionLineItemOptions
+      {
+        Name = "Sales Tax",
+        Description = "9.00%",
+        Amount = (long)(po.SalesTax * 100),
+        Currency = "usd",
+        Quantity = 1
+      }).ToList(),
+      SuccessUrl = "http://localhost:4200/result?session_id={CHECKOUT_SESSION_ID}",
+      CancelUrl = $"http://localhost:4200/checkout?cancel={poId}",
+      Metadata = metaValues
+    };
+    var session = sessions.Create(options);
+    po.StripeCheckoutSessionId = session.Id;
+    _dataService.SavePurchaseOrder(po);
+    return session;
+  }
 }
 ```
 
-### Using the context
-#### Creating
-```C#
-context.Add(item);
+And of course we'll add it to Startup
 
-context.SaveChanges(); // remember to save changes
-```
-#### Reading
-```C#
-var fullList = context.InventoryItems;
-var listOfSaleItems = context.InventoryItems.Where(x => x.IsSaleItem);
+##### Startup.cs
+
+```c#
+	.AddTransient<StripeHelperService>()
 ```
 
-#### Updating
-```C#
-context.Update(item); // if item.Id != 0, will update all fields to match the new object
+### Updating our PurchaseOrder Controller
 
-// alternatively
-var fetchedItem = context.InventoryItems.FindOrDefault(x => x.Id == item.Id);
-fetchedItem.Name = "New Name"; // just update a single field
+##### PurchaseOrderController.cs
 
-// remember to save changes
-context.SaveChanges();
-```
-#### Deleting
-```C#
-var item = context.InventoryItems.FirstOrDefault(x => x.Id == id);
-context.Remove(item);
-
-// save changes!
-context.SaveChanges();
+```c#
+[HttpPost("newSession")]
+public async Task<Session> InitiatePaymentWithStripeAsync(PurchaseOrderRequest[] request)
+{
+	return await _stripeHelper.InitSessionAsync(request);
+}
 ```
 
-### Including Virtual objects.
-```C#
-var listOfSaleItems = context.PurchaseOrders
-	.Include(x => x.Item) // asking entity framework to use InventoryItemId (foreignkey) to map this object with the query
-	.Include(x => x.PaymentType); // asking entity framework to use PaymentTypeId (foreignkey) to map this object with the query
+With a successful session created. Our client can redirect to Stripe with the session Id and present the payment form.
+
+---
+
+## After Payment Made
+
+### _This section coorelates to "After Redirect" in the client ReadMe_
+
+On successful payment, we know we receive the sessionId back from stripe. We know this ecause of the SuccessUrl we assigned in the creation of the Session.
+
+```c#
+  SuccessUrl = "http://localhost:4200/result?session_id={CHECKOUT_SESSION_ID}",
 ```
-~ FIN
+
+Knowing this we'll create a function in our helper service to fetch the session from the Stripe API
+
+##### StripeHelperService.cs
+```c#
+public Session GetSessionBySessionId(string sessionId)
+{
+  return sessions.Get(sessionId);
+}
+```
+
+##### PurchaseOrderController.cs
+```c#
+[HttpGet("session/{sessionId}")]
+public Session GetSession(string sessionId)
+{
+  return _stripeHelper.GetSessionBySessionId(sessionId);
+}
+```
+
+Great!
+---
+
+But is this result useful to us?
+
+Nope.
+
+### Improving Session Response
+You might not have noticed, but this is the same exact session object we had created except 1 field has been updated. `PaymentIntentId`.
+
+The Payment Intent Id provides information about the actual payment. Let see how to fetch the PaymentIntent.
+
+According to [Stripe Api Doc - PaymentIntents](https://stripe.com/docs/api/payment_intents/retrieve) we need to use the `PaymentIntentService`. They provide a snippet of code as an example and the response expected.
+
+So, just like `SessionService`, we'll add this in Startup
+
+##### Startup.cs
+```c#
+services
+  .AddTransient<StripeHelperService>()
+  .AddTransient<SessionService>()
+  .AddTransient<PaymentIntentService>();
+// we can just append the Add function to simplify the code.
+```
+
+```c#
+public Session GetSessionBySessionId(string sessionId)
+{
+  var res = sessions.Get(sessionId);
+  // remember to add paymentIntents to the contructor!
+  res.PaymentIntent = paymentIntents.Get(res.PaymentIntentId);
+  return res;
+}
+```
+
+_Vommit Data Much?_
+--
+
+---
+## Side Quest!
+### Json Response Clean up
+
+When dealing with objects with a pluthera of null values, we can clean up the response by asking Json to ignore them.
+##### Startup.cs
+```c#
+services.AddControllers() // must be appended to AddControllers()
+  .AddJsonOptions(options => options.JsonSerializerOptions.IgnoreNullValues = true);
+```
+---
+
+## Returning meaningful data
+
+Its up to the Api to return meaningful data. Since you're also building the client, you will have the insight to know what that data is.
+
+In our case, we don't need the `session`, as is. We want the `PurchaseOrder`, which can include the `session`. This would be useful to show a printable receipt.
+
+So we'll add a request to use the `sessionId`, to fetch the `PurchaseOrder`.
+
+##### StripeHelperService.cs
+```c#
+public PurchaseOrder GetPurchaseOrderBySessionId(string sessionId)
+{
+  var res = GetSessionBySessionId(sessionId);
+
+  var poId = Int32.Parse(res.Metadata.GetValueOrDefault("PurchaseOrderId"));
+  var po = _dataService.GetPurchaseOrderById(poId);
+
+  // we can also query the db to find the PO that matches the property sessionId
+  var poAlt = _dataService.GetPurchaseOrders()
+    .SingleOrDefault(x => x.StripeCheckoutSessionId == sessionId);
+
+  if (po == null || poAlt == null)
+    return null;
+
+  po.StripeCheckoutSession = res;
+  return po;
+}
+```
+
+## Whats left?
+
+The only part left is to decide what to do with a cancel request. You can use the poId to do whatever you want!
+
+Good luck!
