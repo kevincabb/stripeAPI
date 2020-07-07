@@ -9,26 +9,21 @@ namespace MyStore.Controllers
 	[Route("[controller]")]
 	public class InventoryController : ControllerBase
 	{
-		readonly InventoryFixedDataService _fixedService;
-		readonly InventoryLiteDbService _liteDbService;
+		
 		readonly DataService _dataService;
 		public InventoryController(
-			InventoryFixedDataService fixedService,
-			InventoryLiteDbService liteDbService,
 			DataService dataService
 		)
 		{
-			_fixedService = fixedService;
-			_liteDbService = liteDbService;
 			_dataService = dataService;
 		}
 
-		[HttpGet("populate")]
-		public int PopulateData()
-		{
-			var fixedData = _fixedService.fixedData;
-			return _liteDbService.PopulateData(fixedData);
-		}
+		// [HttpGet("populate")]
+		// public int PopulateData()
+		// {
+		// 	var fixedData = _fixedService.fixedData;
+		// 	return _liteDbService.PopulateData(fixedData);
+		// }
 
 		[HttpGet]
 		public IEnumerable<InventoryItem> GetInventoryItems()
@@ -45,7 +40,7 @@ namespace MyStore.Controllers
 			return _dataService.GetInventoryItemById(id);
 		}
 
-		[HttpPost]
+		[HttpPost("add")]
 		public int AddInventoryItem(InventoryItem item)
 		{
 			// return _fixedService.Insert(item);
@@ -61,11 +56,16 @@ namespace MyStore.Controllers
 		}
 
 		[HttpPost("update")]
-		public bool Update(InventoryItem item)
+		public bool Update(InventoryItem product)
 		{
-			//return _fixedService.Update(item);
-			// return _liteDbService.Update(item);
-			return _dataService.UpdateInventoryItem(item);
+			List<InventoryItem> items =new List<InventoryItem>(_dataService.GetInventoryItems());
+			foreach(var item in items)
+            {
+                if(product.id == item.id){
+                    return _dataService.UpdateInventoryItem(product);
+                }
+            }
+			return false;
 		}
 
 		[HttpGet("findBelowPrice/{price}")]
@@ -83,12 +83,12 @@ namespace MyStore.Controllers
 			return _dataService.UpdateInventoryItemName(request);
 		}
 
-		[HttpGet("ItemsInLocation/{location}")]
-		public IEnumerable<ChangeNameRequest> GetNameAndIdInLocation(string location)
-		{
-			// return _liteDbService.GetNameAndIdsInStorageLocation(location);
-			return _dataService.GetNameAndIdsInStorageLocation(location);
-		}
+		// [HttpGet("ItemsInLocation/{location}")]
+		// public IEnumerable<ChangeNameRequest> GetNameAndIdInLocation(string location)
+		// {
+		// 	// return _liteDbService.GetNameAndIdsInStorageLocation(location);
+		// 	return _dataService.GetNameAndIdsInStorageLocation(location);
+		// }
 
 	}
 }

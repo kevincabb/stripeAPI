@@ -25,13 +25,10 @@ namespace MyStore.Services.Context
 		{
 			//took fixed data straight from fixedService
 			var fixedData = new List<InventoryItem> {
-				new InventoryItem(1, "#2 pencil", "Pencil", .50, "38830982031", "A1", 100),
-				new InventoryItem(2, "spiral notebook", "Notebook", 1.50, "3881111131", "A2", 50),
-				new InventoryItem(3, "3 ring binder with dividers", "Binder", 4.50, "54830982031", "A2", 5),
-				new InventoryItem(4, "Scientific calculator", "Ti83+ Calculator", 49.00, "3889462031", "A4", 100),
-				new InventoryItem(5, "black ball point pen", "Pen", .50, "388309867", "A1", 10),
-				new InventoryItem(6, "metallic coaster", "Coaster", 5.50, "388309212", "A6", 1),
-				new InventoryItem(7, "Fuzzy backpack", "Backpack", 25.49, "388309987", "A5", 100)
+				new InventoryItem( 1, "stripe/Images/hoody.png", "Hoody", "Apparel", 50.99, 1, false),
+				new InventoryItem( 2, "stripe/Images/slippers.png", "Jordan Slides", "Shoes", 70.99, 1, false),
+				new InventoryItem( 3, "stripe/Images/watch.png", "Mr. Nice Watch", "Misc", 99.99, 1, false),
+				new InventoryItem( 4, "stripe/Images/watch.png", "Broken Watch", "Misc", 9.99, 1, false),
 			};
 			builder.Entity<InventoryItem>().HasData(fixedData);
 
@@ -69,7 +66,7 @@ namespace MyStore.Services.Context
 				new PurchaseOrder() {
 					Id = 1,
 					Datetime = DateTime.Now.AddDays(-1),
-					Subtotal = 5.5,
+					Subtotal = 59.99,
 					SalesTax = .45,
 					PaymentTypeId = 2,
 					NameOfBuyer = "John Doe"
@@ -77,10 +74,26 @@ namespace MyStore.Services.Context
 				new PurchaseOrder() {
 					Id = 2,
 					Datetime = DateTime.Now.AddDays(-2),
-					Subtotal = 98.5,
+					Subtotal = 70.99,
+					SalesTax = 106.35,
+					PaymentTypeId = 4,
+					NameOfBuyer = "Mil cab"
+				},
+				new PurchaseOrder() {
+					Id = 3,
+					Datetime = DateTime.Now.AddDays(-2),
+					Subtotal = 99.99,
 					SalesTax = 106.35,
 					PaymentTypeId = 4,
 					NameOfBuyer = "Mildred Smith"
+				},
+				new PurchaseOrder() {
+					Id = 4,
+					Datetime = DateTime.Now.AddDays(-2),
+					Subtotal = 9.99,
+					SalesTax = 106.35,
+					PaymentTypeId = 4,
+					NameOfBuyer = "Bob Pryt"
 				}
 			};
 			builder.Entity<PurchaseOrder>().HasData(orders);
@@ -105,7 +118,7 @@ namespace MyStore.Services.Context
 					Id = 4,
 					InventoryItemId = 4,
 					PurchaseOrderId = 2,
-					Quantity = 2
+					Quantity = 1
 				}
 			};
 			builder.Entity<PurchaseOrderItem>().HasData(orderItems);

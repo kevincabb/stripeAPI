@@ -10,8 +10,8 @@ using MyStore.Services.Context;
 namespace MyStore.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20200311191907_AddPurchaseOrderItems")]
-    partial class AddPurchaseOrderItems
+    [Migration("20200623201728_UpdatePurchaseOrderModel")]
+    partial class UpdatePurchaseOrderModel
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -23,113 +23,73 @@ namespace MyStore.Migrations
 
             modelBuilder.Entity("MyStore.Models.InventoryItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Description")
+                    b.Property<string>("img")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsSaleItem")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("itemName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Price")
+                    b.Property<double>("itemPrice")
                         .HasColumnType("float");
 
-                    b.Property<int>("Quantity")
+                    b.Property<int>("quantity")
                         .HasColumnType("int");
 
-                    b.Property<string>("Sku")
+                    b.Property<bool>("sold")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("type")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("StorageLocation")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
+                    b.HasKey("id");
 
                     b.ToTable("InventoryItems");
 
                     b.HasData(
                         new
                         {
-                            Id = 1,
-                            Description = "#2 pencil",
-                            IsSaleItem = false,
-                            Name = "Pencil",
-                            Price = 0.5,
-                            Quantity = 100,
-                            Sku = "38830982031",
-                            StorageLocation = "A1"
+                            id = 1,
+                            img = "stripe/Images/hoody.png",
+                            itemName = "Hoody",
+                            itemPrice = 50.990000000000002,
+                            quantity = 1,
+                            sold = false,
+                            type = "Apparel"
                         },
                         new
                         {
-                            Id = 2,
-                            Description = "spiral notebook",
-                            IsSaleItem = false,
-                            Name = "Notebook",
-                            Price = 1.5,
-                            Quantity = 50,
-                            Sku = "3881111131",
-                            StorageLocation = "A2"
+                            id = 2,
+                            img = "stripe/Images/slippers.png",
+                            itemName = "Jordan Slides",
+                            itemPrice = 70.989999999999995,
+                            quantity = 1,
+                            sold = false,
+                            type = "Shoes"
                         },
                         new
                         {
-                            Id = 3,
-                            Description = "3 ring binder with dividers",
-                            IsSaleItem = false,
-                            Name = "Binder",
-                            Price = 4.5,
-                            Quantity = 5,
-                            Sku = "54830982031",
-                            StorageLocation = "A2"
+                            id = 3,
+                            img = "stripe/Images/watch.png",
+                            itemName = "Mr. Nice Watch",
+                            itemPrice = 99.989999999999995,
+                            quantity = 1,
+                            sold = false,
+                            type = "Misc"
                         },
                         new
                         {
-                            Id = 4,
-                            Description = "Scientific calculator",
-                            IsSaleItem = false,
-                            Name = "Ti83+ Calculator",
-                            Price = 49.0,
-                            Quantity = 100,
-                            Sku = "3889462031",
-                            StorageLocation = "A4"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Description = "black ball point pen",
-                            IsSaleItem = false,
-                            Name = "Pen",
-                            Price = 0.5,
-                            Quantity = 10,
-                            Sku = "388309867",
-                            StorageLocation = "A1"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Description = "metallic coaster",
-                            IsSaleItem = false,
-                            Name = "Coaster",
-                            Price = 5.5,
-                            Quantity = 1,
-                            Sku = "388309212",
-                            StorageLocation = "A6"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Description = "Fuzzy backpack",
-                            IsSaleItem = false,
-                            Name = "Backpack",
-                            Price = 25.489999999999998,
-                            Quantity = 100,
-                            Sku = "388309987",
-                            StorageLocation = "A5"
+                            id = 4,
+                            img = "stripe/Images/watch.png",
+                            itemName = "Broken Watch",
+                            itemPrice = 9.9900000000000002,
+                            quantity = 1,
+                            sold = false,
+                            type = "Misc"
                         });
                 });
 
@@ -215,20 +175,38 @@ namespace MyStore.Migrations
                         new
                         {
                             Id = 1,
-                            Datetime = new DateTime(2020, 3, 10, 12, 19, 7, 55, DateTimeKind.Local).AddTicks(1612),
+                            Datetime = new DateTime(2020, 6, 22, 13, 17, 28, 149, DateTimeKind.Local).AddTicks(2540),
                             NameOfBuyer = "John Doe",
                             PaymentTypeId = 2,
                             SalesTax = 0.45000000000000001,
-                            Subtotal = 5.5
+                            Subtotal = 59.990000000000002
                         },
                         new
                         {
                             Id = 2,
-                            Datetime = new DateTime(2020, 3, 9, 12, 19, 7, 55, DateTimeKind.Local).AddTicks(4128),
+                            Datetime = new DateTime(2020, 6, 21, 13, 17, 28, 171, DateTimeKind.Local).AddTicks(9110),
+                            NameOfBuyer = "Mil cab",
+                            PaymentTypeId = 4,
+                            SalesTax = 106.34999999999999,
+                            Subtotal = 70.989999999999995
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Datetime = new DateTime(2020, 6, 21, 13, 17, 28, 171, DateTimeKind.Local).AddTicks(9170),
                             NameOfBuyer = "Mildred Smith",
                             PaymentTypeId = 4,
                             SalesTax = 106.34999999999999,
-                            Subtotal = 98.5
+                            Subtotal = 99.989999999999995
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Datetime = new DateTime(2020, 6, 21, 13, 17, 28, 171, DateTimeKind.Local).AddTicks(9180),
+                            NameOfBuyer = "Bob Pryt",
+                            PaymentTypeId = 4,
+                            SalesTax = 106.34999999999999,
+                            Subtotal = 9.9900000000000002
                         });
                 });
 
@@ -283,7 +261,7 @@ namespace MyStore.Migrations
                             Id = 4,
                             InventoryItemId = 4,
                             PurchaseOrderId = 2,
-                            Quantity = 2
+                            Quantity = 1
                         });
                 });
 

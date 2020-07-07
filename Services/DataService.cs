@@ -18,7 +18,8 @@ namespace MyStore.Services
 		public int InsertInventoryItem(InventoryItem item)
 		{
 			var trackedItem = _context.Add(item);
-			return trackedItem.Entity.Id;
+			_context.SaveChanges();
+			return trackedItem.Entity.id;
 		}
 
 		public IEnumerable<InventoryItem> GetInventoryItems()
@@ -30,25 +31,25 @@ namespace MyStore.Services
 		public InventoryItem GetInventoryItemById(int id)
 		{
 			return _context.InventoryItems
-				.SingleOrDefault(x => x.Id == id);
+				.SingleOrDefault(x => x.id == id);
 		}
 
 		public IEnumerable<InventoryItem> GetItemsLessThan(double price)
 		{
 			return _context.InventoryItems
-				.Where(x => x.Price < price);
+				.Where(x => x.itemPrice < price);
 		}
 
-		public IEnumerable<ChangeNameRequest> GetNameAndIdsInStorageLocation(string location)
-		{
-			return GetInventoryItems()
-				.Where(x => x.StorageLocation == location)
-				.Select(x => new ChangeNameRequest()
-				{
-					Id = x.Id,
-					Name = x.Name
-				});
-		}
+		// public IEnumerable<ChangeNameRequest> GetNameAndIdsInStorageLocation(string location)
+		// {
+		// 	return GetInventoryItems()
+		// 		.Where(x => x.StorageLocation == location)
+		// 		.Select(x => new ChangeNameRequest()
+		// 		{
+		// 			Id = x.Id,
+		// 			Name = x.Name
+		// 		});
+		// }
 
 		public bool UpdateInventoryItem(InventoryItem item)
 		{
@@ -59,7 +60,7 @@ namespace MyStore.Services
 		public bool UpdateInventoryItemName(ChangeNameRequest request)
 		{
 			var item = GetInventoryItemById(request.Id);
-			item.Name = request.Name; // changes to the fetch object are tracked by default.
+			item.itemName = request.Name; // changes to the fetch object are tracked by default.
 			// calling save changes will update all tracked items with their new data.
 			return _context.SaveChanges() != 0;
 		}

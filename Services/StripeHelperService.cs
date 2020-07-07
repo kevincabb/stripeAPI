@@ -28,14 +28,14 @@ namespace MyStore.Services
 			var itemList = request.Join(
 				_dataService.GetInventoryItems(),
 				x => x.InventoryItemId,
-				y => y.Id,
+				y => y.id,
 				(x, y) => new PurchaseOrderRequest()
 				{
 					InventoryItemId = x.InventoryItemId,
 					Quantity = x.Quantity,
-					Price = y.Price,
-					Name = y.Name,
-					Description = y.Description
+					Price = y.itemPrice,
+					Name = y.itemName,
+					Description = y.type
 				});
 
 			var po = new PurchaseOrder(itemList);
@@ -73,8 +73,8 @@ namespace MyStore.Services
 					Currency = "usd",
 					Quantity = 1
 				}).ToList(),
-				SuccessUrl = "http://localhost:4200/result?session_id={CHECKOUT_SESSION_ID}",
-				CancelUrl = $"http://localhost:4200/checkout?cancel={poId}",
+				SuccessUrl = "http://kevin.azurewebsites.net/webstore/result?session_id={CHECKOUT_SESSION_ID}",
+				CancelUrl = $"http://kevin.azurewebsites.net/webstore//home",
 				Metadata = metaValues
 			};
 			var session = sessions.Create(options); // Create session

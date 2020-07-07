@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System;
 using LiteDB;
 
 namespace MyStore.Models
@@ -8,29 +9,25 @@ namespace MyStore.Models
 	{
 		[Key]
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-		public int Id { get; set; }
-		public string Description { get; set; }
-		public string Name { get; set; }
-		public double Price { get; set; }
-		public string Sku { get; set; }
-		public string StorageLocation { get; set; }
-		public int Quantity { get; set; }
 
-		public bool IsSaleItem { get; set; }
-		[BsonIgnore][NotMapped] public bool HasDescription => Description != null && Description != "";
+        public int id {get; set;}
+        public string img {get; set;}
+        public string itemName {get; set;}
+        public string type {get; set;}
+        public double itemPrice {get; set;}
+        public int quantity {get; set; }
+        public Boolean sold {get; set;}
+        
+        public InventoryItem(){}
 
-		public InventoryItem() { }
-
-		public InventoryItem(int id, string description, string name, double price, string sku, string storageLocation, int quantity)
-		{
-			this.Id = id;
-			this.Description = description;
-			this.Name = name;
-			this.Price = price;
-			this.Sku = sku;
-			this.StorageLocation = storageLocation;
-			this.Quantity = quantity;
-			this.IsSaleItem = false;
-		}
+        public InventoryItem(int id, string img, string itemName, string type, double itemPrice, int quantity, Boolean sold){
+            this.id = id;
+            this.img = img;
+            this.itemName = itemName;
+            this.type = type;
+            this.itemPrice = itemPrice;
+            this.quantity = quantity;
+            this.sold = sold;
+        }
 	}
 }
